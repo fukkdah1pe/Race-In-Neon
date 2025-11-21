@@ -1,278 +1,1161 @@
 <!DOCTYPE html>
 <html lang="ru">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Неоновая Скорость</title>
+    <!-- Yandex Games SDK -->
     <script src="https://yandex.ru/games/sdk/v2"></script>
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Russo+One&display=swap');
-      
-      :root {
-        --color-player: #00f3ff;
-        --color-obstacle: #ff00ff;
-        --color-danger: #ff0000;
-        --color-bg: #050505;
-      }
+        :root {
+            --color-player: #00f3ff;
+            --color-obstacle: #ff00ff;
+            --color-danger: #ff0000;
+            --color-bg: #050505;
+            --font-main: 'Arial Black', 'Verdana', sans-serif;
+        }
 
-      body {
-        margin: 0;
-        padding: 0;
-        background-color: var(--color-bg);
-        font-family: 'Russo One', sans-serif;
-        overflow: hidden;
-        color: white;
-        user-select: none;
-        -webkit-user-select: none;
-        touch-action: none;
-      }
-      
-      #root {
-        width: 100vw;
-        height: 100vh;
-      }
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--color-bg);
+            font-family: var(--font-main);
+            overflow: hidden;
+            color: white;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+        }
 
-      .app-wrapper {
-        position: relative;
-        width: 100%;
-        height: 100%;
-        background-color: black;
-        overflow: hidden;
-      }
-      
-      /* CRT Scanline Effect */
-      .scanlines::before {
-        content: " ";
-        display: block;
-        position: absolute;
-        top: 0;
-        left: 0;
-        bottom: 0;
-        right: 0;
-        background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-        z-index: 10;
-        background-size: 100% 2px, 3px 100%;
-        pointer-events: none;
-      }
+        #app {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background-color: black;
+            overflow: hidden;
+        }
 
-      /* Mute Button */
-      .mute-btn {
-        position: absolute;
-        top: 16px;
-        right: 16px;
-        z-index: 50;
-        padding: 8px 12px;
-        color: var(--color-player);
-        background: transparent;
-        border: 1px solid rgba(0, 243, 255, 0.3);
-        border-radius: 4px;
-        cursor: pointer;
-        font-family: inherit;
-        font-size: 14px;
-        transition: all 0.2s;
-      }
-      .mute-btn:hover {
-        color: white;
-        background-color: rgba(255, 255, 255, 0.1);
-      }
+        /* CRT Scanline Effect */
+        .scanlines::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 10;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
 
-      /* HUD */
-      .hud {
-        position: absolute;
-        top: 16px;
-        left: 16px;
-        z-index: 30;
-        pointer-events: none;
-      }
-      .score-text {
-        color: var(--color-player);
-        font-size: 1.5rem;
-        text-shadow: 0 0 5px var(--color-player);
-        margin-bottom: 4px;
-      }
-      .highscore-text {
-        color: #9ca3af;
-        font-size: 0.875rem;
-      }
+        /* UI Elements */
+        .hidden { display: none !important; }
 
-      /* Overlays (Menu / Game Over) */
-      .overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        z-index: 40;
-      }
+        .mute-btn {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            z-index: 50;
+            padding: 8px 12px;
+            color: var(--color-player);
+            background: transparent;
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .mute-btn:hover {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
 
-      .menu-bg {
-        background-color: rgba(0, 0, 0, 0.8);
-        backdrop-filter: blur(4px);
-        -webkit-backdrop-filter: blur(4px);
-      }
+        .hud {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            z-index: 30;
+            pointer-events: none;
+        }
+        .score-text {
+            color: var(--color-player);
+            font-size: 1.5rem;
+            text-shadow: 0 0 5px var(--color-player);
+            margin-bottom: 4px;
+        }
+        .highscore-text {
+            color: #9ca3af;
+            font-size: 0.875rem;
+        }
 
-      .game-over-bg {
-        background-color: rgba(0, 0, 0, 0.9);
-        z-index: 50;
-      }
+        .overlay {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 40;
+        }
 
-      /* Typography */
-      .game-title {
-        font-size: 3rem;
-        line-height: 1.1;
-        margin-bottom: 2rem;
-        text-align: center;
-        font-style: italic;
-        letter-spacing: -0.05em;
-      }
-      @media (min-width: 768px) {
-        .game-title { font-size: 4.5rem; }
-      }
+        .menu-bg {
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
 
-      .pulse-text {
-        color: #d1d5db;
-        margin-bottom: 2rem;
-        font-size: 0.875rem;
-        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-      }
-      @media (min-width: 768px) {
-        .pulse-text { font-size: 1rem; }
-      }
+        .game-over-bg {
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 50;
+        }
 
-      .footer-hint {
-        margin-top: 2rem;
-        font-size: 0.75rem;
-        color: #6b7280;
-        text-align: center;
-        line-height: 1.5;
-      }
+        .game-title {
+            font-size: 3rem;
+            line-height: 1.1;
+            margin-bottom: 2rem;
+            text-align: center;
+            font-style: italic;
+            letter-spacing: -0.05em;
+        }
+        .title-neon { color: var(--color-player); text-shadow: 0 0 20px var(--color-player); }
+        .title-speed { color: var(--color-obstacle); text-shadow: 0 0 20px var(--color-obstacle); }
 
-      .game-over-title {
-        font-size: 3rem;
-        color: var(--color-danger);
-        margin-bottom: 0.5rem;
-        text-shadow: 0 0 15px #f00;
-      }
-      @media (min-width: 768px) {
-        .game-over-title { font-size: 4rem; }
-      }
+        .pulse-text {
+            color: #d1d5db;
+            margin-bottom: 2rem;
+            font-size: 0.875rem;
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
 
-      .final-score {
-        font-size: 1.5rem;
-        margin-bottom: 2rem;
-        color: white;
-      }
+        .footer-hint {
+            margin-top: 2rem;
+            font-size: 0.75rem;
+            color: #6b7280;
+            text-align: center;
+            line-height: 1.5;
+        }
 
-      /* Buttons */
-      .btn {
-        padding: 1rem 2rem;
-        font-size: 1.25rem;
-        border-radius: 0.25rem;
-        cursor: pointer;
-        transition: all 0.3s;
-        font-family: inherit;
-        border-width: 1px;
-        border-style: solid;
-        text-transform: uppercase;
-      }
+        .game-over-title {
+            font-size: 3rem;
+            color: var(--color-danger);
+            margin-bottom: 0.5rem;
+            text-shadow: 0 0 15px #f00;
+        }
 
-      .btn-primary {
-        background-color: transparent;
-        border-color: var(--color-player);
-        color: var(--color-player);
-        box-shadow: 0 0 15px var(--color-player);
-        border-width: 2px;
-      }
-      .btn-primary:hover {
-        background-color: var(--color-player);
-        color: black;
-      }
+        .final-score {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            color: white;
+        }
 
-      .btn-group {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-        width: 16rem;
-        max-width: 90%;
-      }
+        .btn {
+            padding: 1rem 2rem;
+            font-size: 1.25rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+            font-weight: bold;
+            border-width: 1px;
+            border-style: solid;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
 
-      .btn-revive {
-        width: 100%;
-        padding: 0.75rem;
-        background-color: var(--color-obstacle);
-        color: white;
-        border-color: var(--color-obstacle);
-        box-shadow: 0 0 10px var(--color-obstacle);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        font-size: 1.1rem;
-      }
-      .btn-revive:hover {
-        background-color: transparent;
-        color: var(--color-obstacle);
-      }
+        .btn-primary {
+            background-color: transparent;
+            border-color: var(--color-player);
+            color: var(--color-player);
+            box-shadow: 0 0 15px var(--color-player);
+            border-width: 2px;
+        }
+        .btn-primary:hover {
+            background-color: var(--color-player);
+            color: black;
+        }
 
-      .btn-restart {
-        width: 100%;
-        padding: 0.75rem;
-        background-color: #1f2937;
-        color: #d1d5db;
-        border-color: #4b5563;
-        font-size: 1.1rem;
-      }
-      .btn-restart:hover {
-        background-color: #374151;
-      }
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            width: 16rem;
+            max-width: 90%;
+        }
 
-      /* Mobile Controls Overlay */
-      .mobile-controls {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        z-index: 20;
-      }
-      .control-zone {
-        width: 50%;
-        height: 100%;
-        transition: background-color 0.1s;
-      }
-      .control-zone:active {
-        background-color: rgba(255, 255, 255, 0.05);
-      }
+        .btn-revive {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--color-obstacle);
+            color: white;
+            border-color: var(--color-obstacle);
+            box-shadow: 0 0 10px var(--color-obstacle);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1.1rem;
+        }
+        .btn-revive:hover {
+            background-color: transparent;
+            color: var(--color-obstacle);
+        }
 
-      /* Canvas */
-      .game-canvas {
-        display: block;
-        width: 100%;
-        height: 100%;
-      }
+        .btn-restart {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: #1f2937;
+            color: #d1d5db;
+            border-color: #4b5563;
+            font-size: 1.1rem;
+        }
+        .btn-restart:hover {
+            background-color: #374151;
+        }
 
-      /* Animations */
-      @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
-      }
+        .mobile-controls {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            z-index: 20;
+        }
+        .control-zone {
+            width: 50%;
+            height: 100%;
+            /* Debug visualization if needed, currently invisible */
+        }
+        .control-zone:active {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @media (min-width: 768px) {
+            .game-title { font-size: 4.5rem; }
+            .game-over-title { font-size: 4rem; }
+        }
     </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/"
-  }
-}
-</script>
 </head>
-  <body>
-    <div id="root"></div>
-  </body>
+<body>
+
+<div id="app" class="scanlines">
+    <!-- Canvas -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- Mute Button -->
+    <button id="btnMute" class="mute-btn">🔊 ВКЛ</button>
+
+    <!-- HUD -->
+    <div id="hud" class="hud hidden">
+        <div class="score-text">СЧЕТ: <span id="scoreVal">0</span></div>
+        <div class="highscore-text">РЕКОРД: <span id="highScoreVal">0</span></div>
+    </div>
+
+    <!-- Menu Screen -->
+    <div id="menuOverlay" class="overlay menu-bg">
+        <h1 class="game-title">
+            <span class="title-neon">НЕОНОВАЯ</span><br/>
+            <span class="title-speed">СКОРОСТЬ</span>
+        </h1>
+        <p className="pulse-text">НАЖМИ ЧТОБЫ НАЧАТЬ</p>
+        <button id="btnStart" class="btn btn-primary">ПОЕХАЛИ!</button>
+        <div class="footer-hint">
+            ПК: СТРЕЛКИ<br/>ТЕЛЕФОН: НАЖИМАЙ ПО БОКАМ
+        </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="gameOverOverlay" class="overlay game-over-bg hidden">
+        <h2 class="game-over-title">АВАРИЯ</h2>
+        <div class="final-score">ИТОГОВЫЙ СЧЕТ: <span id="finalScoreVal">0</span></div>
+        
+        <div class="btn-group">
+            <button id="btnRevive" class="btn btn-revive">
+                <span>📺</span> ВОСКРЕСНУТЬ
+            </button>
+            <button id="btnRestart" class="btn btn-restart">
+                ЗАНОВО
+            </button>
+        </div>
+    </div>
+
+    <!-- Mobile Controls -->
+    <div id="mobileControls" class="mobile-controls hidden">
+        <div id="zoneLeft" class="control-zone"></div>
+        <div id="zoneRight" class="control-zone"></div>
+    </div>
+</div>
+
+<script>
+/**
+ * CONSTANTS & CONFIG
+ */
+const COLORS = {
+    background: '#050510',
+    player: '#00f3ff', 
+    playerGlow: '#00f3ff',
+    obstacle: '#ff00ff',
+    obstacleGlow: '#ff00ff',
+    collectible: '#39ff14',
+    collectibleGlow: '#39ff14',
+    roadLine: '#2d2d44',
+    text: '#ffee00',
+    grid: '#1a1a2e',
+    danger: '#ff0000'
+};
+
+const CONSTANTS = {
+    PLAYER_WIDTH: 40,
+    PLAYER_HEIGHT: 60,
+    LANE_COUNT: 4,
+    BASE_SPEED: 2.7,
+    MAX_SPEED: 16,
+    SPEED_INCREMENT: 0.0026,
+    INVINCIBLE_TIME: 3000,
+    PARTICLE_COUNT: 20,
+    MAX_ENERGY: 100,
+    ENERGY_DECAY: 0.16,
+    ENERGY_GAIN: 100
+};
+
+/**
+ * AUDIO SYSTEM (Procedural Audio)
+ */
+class SoundManager {
+    constructor() {
+        this.ctx = null;
+        this.masterGain = null;
+        this.isMuted = false;
+        this.isPlaying = false;
+        
+        // Sequencer
+        this.nextNoteTime = 0;
+        this.current16thNote = 0;
+        this.tempo = 110;
+        this.lookahead = 25.0;
+        this.scheduleAheadTime = 0.1;
+        this.timerID = null;
+        
+        this.bassLine = [
+            55.00, 55.00, 65.41, 55.00,
+            55.00, 55.00, 49.00, 55.00,
+            43.65, 43.65, 49.00, 43.65,
+            43.65, 43.65, 41.20, 49.00
+        ];
+        
+        // Feature detection
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+            this.ctx = new AudioContextClass();
+            this.masterGain = this.ctx.createGain();
+            this.masterGain.connect(this.ctx.destination);
+            this.masterGain.gain.value = 0.4;
+        }
+    }
+
+    init() {
+        if (this.ctx && this.ctx.state === 'suspended') {
+            this.ctx.resume();
+        }
+    }
+
+    toggleMute(mute) {
+        this.isMuted = mute;
+        if (this.masterGain) {
+            this.masterGain.gain.value = mute ? 0 : 0.4;
+        }
+    }
+
+    startMusic() {
+        if (this.isPlaying || !this.ctx) return;
+        this.isPlaying = true;
+        this.current16thNote = 0;
+        this.nextNoteTime = this.ctx.currentTime;
+        this.scheduler();
+    }
+
+    stopMusic() {
+        this.isPlaying = false;
+        if (this.timerID) {
+            window.clearTimeout(this.timerID);
+        }
+    }
+
+    scheduler() {
+        if (!this.ctx) return;
+        while (this.nextNoteTime < this.ctx.currentTime + this.scheduleAheadTime) {
+            this.scheduleNote(this.current16thNote, this.nextNoteTime);
+            this.nextNote();
+        }
+        if (this.isPlaying) {
+            this.timerID = window.setTimeout(() => this.scheduler(), this.lookahead);
+        }
+    }
+
+    nextNote() {
+        const secondsPerBeat = 60.0 / this.tempo;
+        const secondsPer16th = 0.25 * secondsPerBeat;
+        this.nextNoteTime += secondsPer16th;
+        this.current16thNote = (this.current16thNote + 1) % 16;
+    }
+
+    scheduleNote(beatNumber, time) {
+        if (!this.ctx || !this.masterGain) return;
+        // Kick (0, 4, 8, 12)
+        if (beatNumber % 4 === 0) this.playKick(time);
+        // Snare (4, 12)
+        if (beatNumber % 8 === 4) this.playSnare(time);
+        // HiHat (offbeat)
+        if (beatNumber % 2 !== 0) this.playHiHat(time);
+        // Bass
+        this.playBass(time, this.bassLine[beatNumber] || 55.0);
+    }
+
+    // Synthesizers
+    playKick(time) {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+        osc.frequency.setValueAtTime(150, time);
+        osc.frequency.exponentialRampToValueAtTime(0.01, time + 0.5);
+        gain.gain.setValueAtTime(1, time);
+        gain.gain.exponentialRampToValueAtTime(0.01, time + 0.5);
+        osc.start(time);
+        osc.stop(time + 0.5);
+    }
+
+    playSnare(time) {
+        const bufferSize = this.ctx.sampleRate * 0.1;
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buffer;
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'highpass';
+        filter.frequency.value = 1000;
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(0.5, time);
+        gain.gain.exponentialRampToValueAtTime(0.01, time + 0.1);
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.masterGain);
+        noise.start(time);
+    }
+
+    playHiHat(time) {
+        const bufferSize = this.ctx.sampleRate * 0.05;
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buffer;
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'highpass';
+        filter.frequency.value = 5000;
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(0.15, time);
+        gain.gain.exponentialRampToValueAtTime(0.01, time + 0.05);
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.masterGain);
+        noise.start(time);
+    }
+
+    playBass(time, freq) {
+        const osc = this.ctx.createOscillator();
+        const filter = this.ctx.createBiquadFilter();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.value = freq;
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(800, time);
+        filter.frequency.exponentialRampToValueAtTime(100, time + 0.2);
+        gain.gain.setValueAtTime(0.4, time);
+        gain.gain.exponentialRampToValueAtTime(0.01, time + 0.2);
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.masterGain);
+        osc.start(time);
+        osc.stop(time + 0.2);
+    }
+
+    playCollect() {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, t);
+        osc.frequency.exponentialRampToValueAtTime(1760, t + 0.1);
+        gain.gain.setValueAtTime(0.3, t);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+        osc.start(t);
+        osc.stop(t + 0.3);
+    }
+
+    playNearMiss() {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        const bufferSize = this.ctx.sampleRate * 0.3;
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buffer;
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(400, t);
+        filter.frequency.exponentialRampToValueAtTime(2000, t + 0.15);
+        filter.Q.value = 2;
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(0.3, t + 0.1);
+        gain.gain.linearRampToValueAtTime(0, t + 0.3);
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.masterGain);
+        noise.start(t);
+    }
+
+    playCrash() {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        const bufferSize = this.ctx.sampleRate * 1.0;
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buffer;
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(1000, t);
+        filter.frequency.exponentialRampToValueAtTime(100, t + 0.5);
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(1.0, t);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.8);
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.masterGain);
+        noise.start(t);
+
+        // Sub bass
+        const osc = this.ctx.createOscillator();
+        const subGain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(100, t);
+        osc.frequency.exponentialRampToValueAtTime(0.01, t + 1);
+        subGain.gain.setValueAtTime(0.8, t);
+        subGain.gain.exponentialRampToValueAtTime(0.01, t + 1);
+        osc.connect(subGain);
+        subGain.connect(this.masterGain);
+        osc.start(t);
+        osc.stop(t + 1);
+    }
+    
+    playClick() {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.frequency.setValueAtTime(1200, t);
+        osc.type = 'triangle';
+        gain.gain.setValueAtTime(0.1, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+        osc.start(t);
+        osc.stop(t + 0.05);
+    }
+}
+
+const soundManager = new SoundManager();
+
+
+/**
+ * GAME LOGIC
+ */
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+// State
+let gameState = 'MENU'; // MENU, PLAYING, GAME_OVER
+let score = 0;
+let highScore = parseInt(localStorage.getItem('neon_racer_highscore') || '0');
+let gameConfig = { ...CONSTANTS, speed: CONSTANTS.BASE_SPEED, energy: CONSTANTS.MAX_ENERGY, isInvincible: false, invincibleTimer: 0 };
+let ysdk = null;
+let restartCount = 0;
+let fuelSpawnCount = 0;
+
+// Entities
+let player = { x: 0, y: 0, width: CONSTANTS.PLAYER_WIDTH, height: CONSTANTS.PLAYER_HEIGHT };
+let entities = [];
+let particles = [];
+let floatingTexts = [];
+
+// Timing
+let lastTime = 0;
+let nextFuelSpawnTime = 0;
+let roadOffset = 0;
+let requestID = 0;
+
+// Input
+const keys = {};
+let touchInput = null;
+
+// UI Elements
+const elMenu = document.getElementById('menuOverlay');
+const elGameOver = document.getElementById('gameOverOverlay');
+const elHud = document.getElementById('hud');
+const elMobileControls = document.getElementById('mobileControls');
+const elScoreVal = document.getElementById('scoreVal');
+const elHighScoreVal = document.getElementById('highScoreVal');
+const elFinalScoreVal = document.getElementById('finalScoreVal');
+const btnMute = document.getElementById('btnMute');
+
+// Initialize Yandex SDK
+if (window.YaGames) {
+    window.YaGames.init().then(_sdk => {
+        console.log('YSDK Initialized');
+        ysdk = _sdk;
+    }).catch(err => console.error('YSDK init error:', err));
+}
+
+// --- UTILS ---
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    if (gameState === 'MENU') {
+        player.x = canvas.width / 2 - player.width / 2;
+    }
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+function createExplosion(x, y, color) {
+    for (let i = 0; i < CONSTANTS.PARTICLE_COUNT; i++) {
+        particles.push({
+            x, y,
+            vx: (Math.random() - 0.5) * 10,
+            vy: (Math.random() - 0.5) * 10,
+            life: 1.0,
+            color
+        });
+    }
+}
+
+function createFloatingText(x, y, text, color, fontSize = 18) {
+    floatingTexts.push({ x, y, text, color, life: 1.0, vy: -2, fontSize });
+}
+
+function updateHUD() {
+    elScoreVal.innerText = Math.floor(score);
+    elHighScoreVal.innerText = highScore;
+}
+
+// --- GAME LOOP ---
+
+function initGame() {
+    // Reset State
+    gameConfig = { 
+        ...CONSTANTS, 
+        speed: CONSTANTS.BASE_SPEED, 
+        energy: CONSTANTS.MAX_ENERGY, 
+        isInvincible: false, 
+        invincibleTimer: 0 
+    };
+    score = 0;
+    entities = [];
+    particles = [];
+    floatingTexts = [];
+    nextFuelSpawnTime = performance.now() + 2000;
+    fuelSpawnCount = 0;
+    
+    // Center Player
+    player.x = canvas.width / 2 - player.width / 2;
+    player.y = canvas.height - player.height - 100;
+
+    updateHUD();
+}
+
+function spawnEntity(forceType, specificLane) {
+    const isForced = forceType !== undefined;
+    const shouldSpawnObstacle = !isForced && Math.random() < 0.053; 
+
+    if (isForced || shouldSpawnObstacle) {
+        const laneWidth = canvas.width / CONSTANTS.LANE_COUNT;
+        const lane = (specificLane !== undefined) ? specificLane : Math.floor(Math.random() * CONSTANTS.LANE_COUNT);
+        
+        const type = forceType || 'OBSTACLE';
+        const isCollectible = type === 'COLLECTIBLE';
+        const size = isCollectible ? 30 : CONSTANTS.PLAYER_WIDTH;
+        
+        let speed = gameConfig.speed;
+        if (!isCollectible) {
+            const r = Math.random();
+            if (r < 0.25) speed *= (3.0 + Math.random());
+            else if (r < 0.5) speed *= (1.5 + Math.random() * 0.5);
+            else speed *= (0.8 + Math.random() * 0.4);
+        }
+
+        const entity = {
+            x: lane * laneWidth + (laneWidth - size) / 2,
+            y: -200,
+            width: size,
+            height: size,
+            color: isCollectible ? COLORS.collectible : COLORS.obstacle,
+            speedY: speed,
+            type: type,
+            bonusAwarded: false
+        };
+
+        // Prevent overlap
+        const overlap = entities.some(e => Math.abs(e.y - entity.y) < 150 && e.x === entity.x);
+        if (!overlap) entities.push(entity);
+    }
+}
+
+function update(time) {
+    // Speed
+    if (gameConfig.speed < CONSTANTS.MAX_SPEED) {
+        gameConfig.speed += CONSTANTS.SPEED_INCREMENT;
+    }
+
+    // Energy
+    gameConfig.energy -= CONSTANTS.ENERGY_DECAY;
+    if (gameConfig.energy <= 0) {
+        gameConfig.energy = 0;
+        createExplosion(player.x, player.y, COLORS.player);
+        handleCrash();
+        return;
+    }
+
+    // Road Scroll
+    roadOffset = (roadOffset + gameConfig.speed) % 100;
+
+    // Player Move
+    const mvSpeed = 6; 
+    if (keys['ArrowLeft'] || touchInput === 'LEFT') player.x -= mvSpeed;
+    if (keys['ArrowRight'] || touchInput === 'RIGHT') player.x += mvSpeed;
+    
+    if (player.x < 0) player.x = 0;
+    if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+
+    // Invincibility
+    if (gameConfig.isInvincible && time > gameConfig.invincibleTimer) {
+        gameConfig.isInvincible = false;
+    }
+
+    // Spawning
+    spawnEntity(); // Random Obstacles
+    if (time > nextFuelSpawnTime) {
+        fuelSpawnCount++;
+        
+        // Every second time (2, 4, 6...), spawn 2 items. Otherwise spawn 1.
+        const count = (fuelSpawnCount % 2 === 0) ? 2 : 1;
+        
+        // Randomize available lanes to prevent overlap when spawning 2
+        const availableLanes = [];
+        for(let k=0; k<CONSTANTS.LANE_COUNT; k++) availableLanes.push(k);
+        availableLanes.sort(() => Math.random() - 0.5);
+
+        for(let i=0; i<count; i++) {
+            spawnEntity('COLLECTIBLE', availableLanes[i]);
+        }
+        
+        nextFuelSpawnTime = time + 3000; 
+    }
+
+    // Entity Logic
+    for (let i = entities.length - 1; i >= 0; i--) {
+        const ent = entities[i];
+        const prevY = ent.y;
+        ent.y += (ent.speedY || gameConfig.speed);
+
+        // Collision
+        const ho = player.x < ent.x + ent.width && player.x + player.width > ent.x;
+        const vo = (player.y < ent.y + ent.height && player.y + player.height > ent.y) || 
+                   (prevY + ent.height < player.y && ent.y + ent.height >= player.y);
+
+        if (ho && vo) {
+            if (ent.type === 'COLLECTIBLE') {
+                gameConfig.energy = Math.min(gameConfig.energy + CONSTANTS.ENERGY_GAIN, CONSTANTS.MAX_ENERGY);
+                score += 50;
+                createExplosion(ent.x + ent.width/2, ent.y + ent.height/2, COLORS.collectible);
+                entities.splice(i, 1);
+                soundManager.playCollect();
+                updateHUD();
+                continue;
+            } else {
+                if (!gameConfig.isInvincible) {
+                    createExplosion(player.x + player.width/2, player.y + player.height/2, COLORS.player);
+                    handleCrash();
+                    return;
+                }
+            }
+        }
+
+        // Near Miss
+        if (ent.type === 'OBSTACLE' && !ent.bonusAwarded && ent.y > player.y) {
+            let gap = 0;
+            if (ent.x > player.x + player.width) gap = ent.x - (player.x + player.width);
+            else if (ent.x + ent.width < player.x) gap = player.x - (ent.x + ent.width);
+            
+            if (gap > 0 && gap < 60) {
+                ent.bonusAwarded = true;
+                const bonus = Math.floor(100 * (1 - gap/60));
+                if (bonus > 5) {
+                    score += bonus;
+                    soundManager.playNearMiss();
+                    updateHUD();
+                    
+                    let color = "#ffffff";
+                    let txt = `+${bonus}`;
+                    let size = 18;
+                    if (bonus >= 90) { color = "#ff0000"; size = 28; txt = `ОПАСНО +${bonus}`; }
+                    else if (bonus >= 75) { color = "#ff5500"; size = 24; txt = `БЛИЗКО +${bonus}`; }
+                    
+                    createFloatingText(player.x + player.width/2, player.y, txt, color, size);
+                }
+            }
+        }
+
+        // Remove off-screen
+        if (ent.y > canvas.height) {
+            entities.splice(i, 1);
+            if (ent.type === 'OBSTACLE') {
+                score += 10;
+                updateHUD();
+            }
+        }
+    }
+
+    // Particles
+    for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life -= 0.05;
+        if (p.life <= 0) particles.splice(i, 1);
+    }
+
+    // Texts
+    for (let i = floatingTexts.length - 1; i >= 0; i--) {
+        const ft = floatingTexts[i];
+        ft.y += ft.vy;
+        ft.life -= 0.02;
+        if (ft.life <= 0) floatingTexts.splice(i, 1);
+    }
+}
+
+function draw() {
+    // Clear
+    ctx.fillStyle = COLORS.background;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Grid/Road
+    ctx.strokeStyle = COLORS.roadLine;
+    ctx.lineWidth = 2;
+    ctx.shadowBlur = 0;
+    
+    const laneWidth = canvas.width / CONSTANTS.LANE_COUNT;
+    ctx.beginPath();
+    for (let i = 1; i < CONSTANTS.LANE_COUNT; i++) {
+        ctx.moveTo(i * laneWidth, 0);
+        ctx.lineTo(i * laneWidth, canvas.height);
+    }
+    ctx.stroke();
+
+    ctx.beginPath();
+    for (let y = roadOffset; y < canvas.height; y += 100) {
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+    }
+    ctx.globalAlpha = 0.3;
+    ctx.stroke();
+    ctx.globalAlpha = 1.0;
+
+    // Player
+    if (!gameConfig.isInvincible || Math.floor(Date.now() / 100) % 2 === 0) {
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = COLORS.playerGlow;
+        ctx.fillStyle = COLORS.player;
+        const p = player;
+        ctx.beginPath();
+        ctx.moveTo(p.x + p.width * 0.2, p.y); 
+        ctx.lineTo(p.x + p.width * 0.8, p.y); 
+        ctx.lineTo(p.x + p.width, p.y + p.height * 0.3); 
+        ctx.lineTo(p.x + p.width, p.y + p.height); 
+        ctx.lineTo(p.x + p.width * 0.8, p.y + p.height * 0.8); 
+        ctx.lineTo(p.x + p.width * 0.2, p.y + p.height * 0.8); 
+        ctx.lineTo(p.x, p.y + p.height); 
+        ctx.lineTo(p.x, p.y + p.height * 0.3); 
+        ctx.closePath();
+        ctx.fill();
+        
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(p.x + p.width * 0.3, p.y + p.height * 0.8, p.width * 0.4, 4);
+    }
+
+    // Entities
+    entities.forEach(ent => {
+        if (ent.type === 'COLLECTIBLE') {
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = COLORS.collectibleGlow;
+            ctx.fillStyle = COLORS.collectible;
+            ctx.beginPath();
+            ctx.moveTo(ent.x + ent.width/2, ent.y);
+            ctx.lineTo(ent.x + ent.width, ent.y + ent.height/2);
+            ctx.lineTo(ent.x + ent.width/2, ent.y + ent.height);
+            ctx.lineTo(ent.x, ent.y + ent.height/2);
+            ctx.fill();
+            
+            ctx.fillStyle = "#ffffff";
+            ctx.beginPath();
+            ctx.arc(ent.x + ent.width/2, ent.y + ent.height/2, ent.width/4, 0, Math.PI*2);
+            ctx.fill();
+        } else {
+            const isFast = (ent.speedY || 0) > (gameConfig.speed * 1.5);
+            ctx.shadowBlur = isFast ? 30 : 15;
+            ctx.shadowColor = COLORS.obstacleGlow;
+            ctx.fillStyle = COLORS.obstacle;
+            ctx.fillRect(ent.x, ent.y, ent.width, ent.height);
+            
+            ctx.strokeStyle = isFast ? '#fff' : '#ffccff';
+            ctx.lineWidth = isFast ? 4 : 2;
+            ctx.strokeRect(ent.x, ent.y, ent.width, ent.height);
+        }
+    });
+
+    // Particles
+    particles.forEach(p => {
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = p.color;
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = p.life;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 3, 0, Math.PI*2);
+        ctx.fill();
+    });
+    ctx.globalAlpha = 1.0;
+
+    // Floating Text
+    floatingTexts.forEach(ft => {
+        ctx.globalAlpha = ft.life;
+        ctx.font = `bold ${ft.fontSize}px Arial`;
+        ctx.fillStyle = ft.color;
+        ctx.shadowBlur = 5;
+        ctx.shadowColor = ft.color;
+        ctx.textAlign = "center";
+        ctx.fillText(ft.text, ft.x, ft.y);
+    });
+    ctx.globalAlpha = 1.0;
+
+    // Energy Bar
+    const barWidth = 20;
+    const barHeight = 200;
+    const barX = 20;
+    const barY = canvas.height / 2 - barHeight / 2;
+    const ratio = gameConfig.energy / CONSTANTS.MAX_ENERGY;
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+    ctx.fillRect(barX, barY, barWidth, barHeight);
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(barX, barY, barWidth, barHeight);
+
+    let barColor = COLORS.collectible;
+    if (ratio < 0.3) barColor = COLORS.danger;
+    else if (ratio < 0.6) barColor = '#ffff00';
+
+    ctx.fillStyle = barColor;
+    ctx.shadowColor = barColor;
+    ctx.shadowBlur = 10;
+    const h = barHeight * ratio;
+    ctx.fillRect(barX, barY + (barHeight - h), barWidth, h);
+
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = "left";
+    ctx.font = "bold 12px Arial";
+    ctx.shadowBlur = 0;
+    ctx.fillText("ТОПЛИВО", barX - 5, barY + barHeight + 20);
+}
+
+function gameLoop(time) {
+    if (gameState !== 'PLAYING') return;
+    const dt = time - lastTime;
+    lastTime = time;
+    update(time);
+    draw();
+    requestID = requestAnimationFrame(gameLoop);
+}
+
+// --- GAME FLOW ---
+
+function startGame() {
+    soundManager.init();
+    soundManager.playClick();
+    soundManager.startMusic();
+    
+    elMenu.classList.add('hidden');
+    elGameOver.classList.add('hidden');
+    elHud.classList.remove('hidden');
+    elMobileControls.classList.remove('hidden');
+    
+    gameState = 'PLAYING';
+    initGame();
+    
+    if (ysdk && ysdk.features.GameplayAPI) {
+        ysdk.features.GameplayAPI.start();
+    }
+
+    lastTime = performance.now();
+    requestID = requestAnimationFrame(gameLoop);
+}
+
+function handleCrash() {
+    gameState = 'GAME_OVER';
+    soundManager.stopMusic();
+    soundManager.playCrash();
+    cancelAnimationFrame(requestID);
+    
+    elHud.classList.add('hidden');
+    elMobileControls.classList.add('hidden');
+    elGameOver.classList.remove('hidden');
+    elFinalScoreVal.innerText = Math.floor(score);
+    
+    if (score > highScore) {
+        highScore = Math.floor(score);
+        localStorage.setItem('neon_racer_highscore', highScore);
+        updateHUD();
+    }
+    
+    if (ysdk && ysdk.features.GameplayAPI) {
+        ysdk.features.GameplayAPI.stop();
+    }
+}
+
+function reviveGame() {
+    gameState = 'PLAYING';
+    elGameOver.classList.add('hidden');
+    elHud.classList.remove('hidden');
+    elMobileControls.classList.remove('hidden');
+    
+    gameConfig.energy = CONSTANTS.MAX_ENERGY;
+    gameConfig.isInvincible = true;
+    gameConfig.invincibleTimer = performance.now() + CONSTANTS.INVINCIBLE_TIME;
+    nextFuelSpawnTime = performance.now() + 3000; // Changed from 4000 to 3000
+    
+    // Clear dangers nearby
+    entities = entities.filter(e => e.y < player.y - 300);
+    
+    soundManager.startMusic();
+    if (ysdk && ysdk.features.GameplayAPI) ysdk.features.GameplayAPI.start();
+    
+    lastTime = performance.now();
+    requestID = requestAnimationFrame(gameLoop);
+}
+
+// --- ADS & RESTART ---
+
+function handleRestart() {
+    restartCount++;
+    
+    if (ysdk && restartCount % 3 === 0) {
+        ysdk.adv.showFullscreenAdv({
+            callbacks: {
+                onOpen: () => { soundManager.toggleMute(true); },
+                onClose: () => {
+                    if (!btnMute.innerText.includes('ВЫКЛ')) soundManager.toggleMute(false);
+                    startGame();
+                },
+                onError: () => { startGame(); }
+            }
+        });
+    } else {
+        startGame();
+    }
+}
+
+function showRewardedAd() {
+    soundManager.init();
+    if (ysdk) {
+        ysdk.adv.showRewardedVideo({
+            callbacks: {
+                onOpen: () => { soundManager.toggleMute(true); },
+                onRewarded: () => {
+                    console.log('Revived via Ad');
+                    reviveGame();
+                },
+                onClose: () => {
+                    if (!btnMute.innerText.includes('ВЫКЛ')) soundManager.toggleMute(false);
+                },
+                onError: (e) => { console.error(e); }
+            }
+        });
+    } else {
+        // Dev Simulation
+        const sim = document.createElement('div');
+        sim.style.position = 'fixed'; sim.style.inset = '0'; sim.style.background = 'black'; 
+        sim.style.zIndex = '9999'; sim.style.display = 'flex'; sim.style.alignItems = 'center'; sim.style.justifyContent = 'center';
+        sim.innerHTML = '<h1 style="color:white">СИМУЛЯЦИЯ РЕКЛАМЫ...</h1>';
+        document.body.appendChild(sim);
+        setTimeout(() => {
+            document.body.removeChild(sim);
+            reviveGame();
+        }, 2000);
+    }
+}
+
+// --- EVENTS ---
+
+document.getElementById('btnStart').addEventListener('click', startGame);
+document.getElementById('btnRestart').addEventListener('click', handleRestart);
+document.getElementById('btnRevive').addEventListener('click', showRewardedAd);
+
+btnMute.addEventListener('click', () => {
+    const isMuted = btnMute.innerText.includes('ВКЛ'); // currently on, so switch to off
+    soundManager.toggleMute(isMuted);
+    btnMute.innerText = isMuted ? '🔇 ВЫКЛ' : '🔊 ВКЛ';
+});
+
+// Keyboard
+window.addEventListener('keydown', e => { keys[e.key] = true; });
+window.addEventListener('keyup', e => { keys[e.key] = false; });
+
+// Touch
+const zLeft = document.getElementById('zoneLeft');
+const zRight = document.getElementById('zoneRight');
+
+function bindTouch(el, val) {
+    const handler = (e) => { e.preventDefault(); touchInput = val; };
+    const endHandler = (e) => { e.preventDefault(); touchInput = null; };
+    el.addEventListener('touchstart', handler);
+    el.addEventListener('mousedown', handler);
+    el.addEventListener('touchend', endHandler);
+    el.addEventListener('mouseup', endHandler);
+}
+
+bindTouch(zLeft, 'LEFT');
+bindTouch(zRight, 'RIGHT');
+
+</script>
+</body>
 </html>
