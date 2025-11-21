@@ -18,6 +18,7 @@ export interface Entity {
   color: string;
   speedY?: number;
   type: 'OBSTACLE' | 'COLLECTIBLE';
+  bonusAwarded?: boolean; // Отслеживание получения бонуса за опасный момент
 }
 
 export interface Particle {
@@ -27,6 +28,16 @@ export interface Particle {
   vy: number;
   life: number;
   color: string;
+}
+
+export interface FloatingText {
+  x: number;
+  y: number;
+  text: string;
+  color: string;
+  life: number; // от 0 до 1
+  vy: number;   // вертикальная скорость
+  fontSize?: number;
 }
 
 export interface GameConfig {
