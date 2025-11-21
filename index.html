@@ -5,16 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Неоновая Скорость</title>
     <script src="https://yandex.ru/games/sdk/v2"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-      /* Russo One supports Cyrillic and fits the techno/arcade theme well */
       @import url('https://fonts.googleapis.com/css2?family=Russo+One&display=swap');
       
+      :root {
+        --color-player: #00f3ff;
+        --color-obstacle: #ff00ff;
+        --color-danger: #ff0000;
+        --color-bg: #050505;
+      }
+
       body {
+        margin: 0;
+        padding: 0;
+        background-color: var(--color-bg);
         font-family: 'Russo One', sans-serif;
         overflow: hidden;
-        background-color: #050505;
-        touch-action: none; /* Prevent browser zooming/scrolling */
+        color: white;
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: none;
+      }
+      
+      #root {
+        width: 100vw;
+        height: 100vh;
+      }
+
+      .app-wrapper {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background-color: black;
+        overflow: hidden;
       }
       
       /* CRT Scanline Effect */
@@ -31,6 +54,213 @@
         background-size: 100% 2px, 3px 100%;
         pointer-events: none;
       }
+
+      /* Mute Button */
+      .mute-btn {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        z-index: 50;
+        padding: 8px 12px;
+        color: var(--color-player);
+        background: transparent;
+        border: 1px solid rgba(0, 243, 255, 0.3);
+        border-radius: 4px;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 14px;
+        transition: all 0.2s;
+      }
+      .mute-btn:hover {
+        color: white;
+        background-color: rgba(255, 255, 255, 0.1);
+      }
+
+      /* HUD */
+      .hud {
+        position: absolute;
+        top: 16px;
+        left: 16px;
+        z-index: 30;
+        pointer-events: none;
+      }
+      .score-text {
+        color: var(--color-player);
+        font-size: 1.5rem;
+        text-shadow: 0 0 5px var(--color-player);
+        margin-bottom: 4px;
+      }
+      .highscore-text {
+        color: #9ca3af;
+        font-size: 0.875rem;
+      }
+
+      /* Overlays (Menu / Game Over) */
+      .overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 40;
+      }
+
+      .menu-bg {
+        background-color: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+      }
+
+      .game-over-bg {
+        background-color: rgba(0, 0, 0, 0.9);
+        z-index: 50;
+      }
+
+      /* Typography */
+      .game-title {
+        font-size: 3rem;
+        line-height: 1.1;
+        margin-bottom: 2rem;
+        text-align: center;
+        font-style: italic;
+        letter-spacing: -0.05em;
+      }
+      @media (min-width: 768px) {
+        .game-title { font-size: 4.5rem; }
+      }
+
+      .pulse-text {
+        color: #d1d5db;
+        margin-bottom: 2rem;
+        font-size: 0.875rem;
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+      @media (min-width: 768px) {
+        .pulse-text { font-size: 1rem; }
+      }
+
+      .footer-hint {
+        margin-top: 2rem;
+        font-size: 0.75rem;
+        color: #6b7280;
+        text-align: center;
+        line-height: 1.5;
+      }
+
+      .game-over-title {
+        font-size: 3rem;
+        color: var(--color-danger);
+        margin-bottom: 0.5rem;
+        text-shadow: 0 0 15px #f00;
+      }
+      @media (min-width: 768px) {
+        .game-over-title { font-size: 4rem; }
+      }
+
+      .final-score {
+        font-size: 1.5rem;
+        margin-bottom: 2rem;
+        color: white;
+      }
+
+      /* Buttons */
+      .btn {
+        padding: 1rem 2rem;
+        font-size: 1.25rem;
+        border-radius: 0.25rem;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-family: inherit;
+        border-width: 1px;
+        border-style: solid;
+        text-transform: uppercase;
+      }
+
+      .btn-primary {
+        background-color: transparent;
+        border-color: var(--color-player);
+        color: var(--color-player);
+        box-shadow: 0 0 15px var(--color-player);
+        border-width: 2px;
+      }
+      .btn-primary:hover {
+        background-color: var(--color-player);
+        color: black;
+      }
+
+      .btn-group {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        width: 16rem;
+        max-width: 90%;
+      }
+
+      .btn-revive {
+        width: 100%;
+        padding: 0.75rem;
+        background-color: var(--color-obstacle);
+        color: white;
+        border-color: var(--color-obstacle);
+        box-shadow: 0 0 10px var(--color-obstacle);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        font-size: 1.1rem;
+      }
+      .btn-revive:hover {
+        background-color: transparent;
+        color: var(--color-obstacle);
+      }
+
+      .btn-restart {
+        width: 100%;
+        padding: 0.75rem;
+        background-color: #1f2937;
+        color: #d1d5db;
+        border-color: #4b5563;
+        font-size: 1.1rem;
+      }
+      .btn-restart:hover {
+        background-color: #374151;
+      }
+
+      /* Mobile Controls Overlay */
+      .mobile-controls {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        z-index: 20;
+      }
+      .control-zone {
+        width: 50%;
+        height: 100%;
+        transition: background-color 0.1s;
+      }
+      .control-zone:active {
+        background-color: rgba(255, 255, 255, 0.05);
+      }
+
+      /* Canvas */
+      .game-canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+
+      /* Animations */
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+      }
     </style>
   <script type="importmap">
 {
@@ -42,7 +272,7 @@
 }
 </script>
 </head>
-  <body class="bg-black text-white h-screen w-screen relative overflow-hidden">
-    <div id="root" class="h-full w-full"></div>
+  <body>
+    <div id="root"></div>
   </body>
 </html>

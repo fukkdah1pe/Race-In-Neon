@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import GameCanvas from './components/GameCanvas';
 import { GameState } from './types';
@@ -175,23 +174,23 @@ function App() {
   };
 
   return (
-    <div className="relative w-full h-full bg-black scanlines select-none font-bold">
+    <div className="app-wrapper scanlines">
       
       {/* Кнопка звука */}
       <button 
         onClick={toggleMute}
-        className="absolute top-4 right-4 z-50 p-2 text-[#0ff] hover:text-white hover:bg-white/10 rounded border border-[#0ff]/30"
+        className="mute-btn"
       >
         {isMuted ? '🔇 ВЫКЛ' : '🔊 ВКЛ'}
       </button>
 
       {/* HUD Игры */}
       {gameState !== GameState.MENU && (
-        <div className="absolute top-4 left-4 z-30 pointer-events-none">
-          <div className="text-[#0ff] text-2xl drop-shadow-[0_0_5px_#0ff]">
+        <div className="hud">
+          <div className="score-text">
             СЧЕТ: {score}
           </div>
-          <div className="text-sm text-gray-400">
+          <div className="highscore-text">
             РЕКОРД: {highScore}
           </div>
         </div>
@@ -199,21 +198,21 @@ function App() {
 
       {/* Главное меню */}
       {gameState === GameState.MENU && (
-        <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm">
-          <h1 className="text-5xl md:text-7xl mb-8 text-center italic tracking-tighter"
-              style={{ color: COLORS.player, textShadow: `0 0 20px ${COLORS.player}` }}>
-            НЕОНОВАЯ<br/><span style={{ color: COLORS.obstacle, textShadow: `0 0 20px ${COLORS.obstacle}` }}>СКОРОСТЬ</span>
+        <div className="overlay menu-bg">
+          <h1 className="game-title">
+            <span style={{ color: COLORS.player, textShadow: `0 0 20px ${COLORS.player}` }}>НЕОНОВАЯ</span><br/>
+            <span style={{ color: COLORS.obstacle, textShadow: `0 0 20px ${COLORS.obstacle}` }}>СКОРОСТЬ</span>
           </h1>
-          <p className="text-gray-300 mb-8 text-sm md:text-base animate-pulse">
+          <p className="pulse-text">
             НАЖМИ ЧТОБЫ НАЧАТЬ
           </p>
           <button 
             onClick={startGame}
-            className="px-8 py-4 bg-transparent border-2 border-[#0ff] text-[#0ff] text-xl rounded hover:bg-[#0ff] hover:text-black transition-all duration-300 shadow-[0_0_15px_#0ff]"
+            className="btn btn-primary"
           >
             ПОЕХАЛИ!
           </button>
-          <div className="mt-8 text-xs text-gray-500 text-center">
+          <div className="footer-hint">
             ПК: СТРЕЛКИ<br/>ТЕЛЕФОН: НАЖИМАЙ ПО БОКАМ
           </div>
         </div>
@@ -221,21 +220,21 @@ function App() {
 
       {/* Экран проигрыша */}
       {gameState === GameState.GAME_OVER && (
-        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/90">
-          <h2 className="text-6xl text-[#ff0000] mb-2 drop-shadow-[0_0_15px_#f00]">АВАРИЯ</h2>
-          <div className="text-2xl mb-8 text-white">ИТОГОВЫЙ СЧЕТ: {score}</div>
+        <div className="overlay game-over-bg">
+          <h2 className="game-over-title">АВАРИЯ</h2>
+          <div className="final-score">ИТОГОВЫЙ СЧЕТ: {score}</div>
           
-          <div className="flex flex-col gap-4 w-64">
+          <div className="btn-group">
             <button 
               onClick={showRewardedAd}
-              className="w-full py-3 bg-[#f0f] text-white rounded border border-[#f0f] hover:bg-transparent hover:text-[#f0f] transition-all shadow-[0_0_10px_#f0f] flex items-center justify-center gap-2"
+              className="btn btn-revive"
             >
               <span>📺</span> ВОСКРЕСНУТЬ
             </button>
             
             <button 
               onClick={handleRestartClick}
-              className="w-full py-3 bg-gray-800 text-gray-300 rounded border border-gray-600 hover:bg-gray-700 transition-all"
+              className="btn btn-restart"
             >
               ЗАНОВО
             </button>

@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { GameState, Entity, Particle, GameConfig, FloatingText } from '../types';
 import { COLORS, CONSTANTS } from '../constants';
@@ -593,20 +592,20 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
   return (
     <>
-      <canvas ref={canvasRef} className="block w-full h-full" />
+      <canvas ref={canvasRef} className="game-canvas" />
       
       {/* Mobile Controls Overlay */}
       {gameState === GameState.PLAYING && (
-        <div className="absolute inset-0 z-20 flex">
+        <div className="mobile-controls">
           <div 
-            className="w-1/2 h-full active:bg-white/5 transition-colors"
+            className="control-zone"
             onTouchStart={() => handleTouchStart('LEFT')}
             onTouchEnd={handleTouchEnd}
             onMouseDown={() => handleTouchStart('LEFT')}
             onMouseUp={handleTouchEnd}
           ></div>
           <div 
-            className="w-1/2 h-full active:bg-white/5 transition-colors"
+            className="control-zone"
             onTouchStart={() => handleTouchStart('RIGHT')}
             onTouchEnd={handleTouchEnd}
             onMouseDown={() => handleTouchStart('RIGHT')}
