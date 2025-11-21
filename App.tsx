@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import GameCanvas from './components/GameCanvas';
 import { GameState } from './types';
 import { COLORS } from './constants';
@@ -11,23 +11,43 @@ function App() {
   const [highScore, setHighScore] = useState(0);
   const [reviveTrigger, setReviveTrigger] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
+  
+  // Yandex Games SDK State
+  const [ysdk, setYsdk] = useState<any>(null);
+  const restartCountRef = useRef(0);
+
+  // Инициализация SDK
+  useEffect(() => {
+    if ((window as any).YaGames) {
+      (window as any).YaGames.init().then((_sdk: any) => {
+        console.log('Yandex Games SDK initialized');
+        setYsdk(_sdk);
+      });
+    }
+  }, []);
+
+  // Инициализация рекорда
+  React.useEffect(() => {
+    // Пытаемся получить данные из Yandex Storage, если нет - из LocalStorage
+    const saved = localStorage.getItem('neon_racer_highscore');
+    if (saved) setHighScore(parseInt(saved, 10));
+  }, []);
 
   const handleCrash = useCallback(() => {
     setGameState(GameState.GAME_OVER);
     soundManager.stopMusic();
     soundManager.playCrash();
     
+    // Gameplay API: Stop
+    if (ysdk && ysdk.features.GameplayAPI) {
+      ysdk.features.GameplayAPI.stop();
+    }
+    
     if (score > highScore) {
       setHighScore(score);
       localStorage.setItem('neon_racer_highscore', String(score));
     }
-  }, [score, highScore]);
-
-  // Инициализация рекорда
-  React.useEffect(() => {
-    const saved = localStorage.getItem('neon_racer_highscore');
-    if (saved) setHighScore(parseInt(saved, 10));
-  }, []);
+  }, [score, highScore, ysdk]);
 
   const toggleMute = () => {
     const newState = !isMuted;
@@ -47,45 +67,111 @@ function App() {
     setScore(0);
     setReviveTrigger(0);
     soundManager.startMusic();
+    
+    // Gameplay API: Start
+    if (ysdk && ysdk.features.GameplayAPI) {
+      ysdk.features.GameplayAPI.start();
+    }
   };
 
-  const restartGame = () => {
+  // Логика самого рестарта
+  const performRestart = () => {
     initAudio();
     setGameState(GameState.PLAYING);
     setScore(0);
     setReviveTrigger(0);
     soundManager.startMusic();
+
+    // Gameplay API: Start
+    if (ysdk && ysdk.features.GameplayAPI) {
+      ysdk.features.GameplayAPI.start();
+    }
   };
 
-  // Имитация рекламы
+  // Обработчик кнопки рестарт (с рекламой)
+  const handleRestartClick = () => {
+    restartCountRef.current += 1;
+
+    // Показываем рекламу каждый 3-й раз, если SDK загружен
+    if (ysdk && restartCountRef.current % 3 === 0) {
+      ysdk.adv.showFullscreenAdv({
+        callbacks: {
+          onOpen: () => {
+            soundManager.toggleMute(true);
+          },
+          onClose: (wasShown: boolean) => {
+            soundManager.toggleMute(isMuted); // Возвращаем как было (или false если хотим включить)
+            if (!isMuted) soundManager.toggleMute(false); // Принудительно включаем, если пользователь не мьютил сам
+            performRestart();
+          },
+          onError: (error: any) => {
+            console.error('Ad error:', error);
+            performRestart();
+          }
+        }
+      });
+    } else {
+      performRestart();
+    }
+  };
+
+  // Воскрешение за рекламу (Rewarded Video)
   const showRewardedAd = () => {
     initAudio();
-    console.log("ПОКАЗ РЕКЛАМЫ...");
-    // Симуляция длительности рекламы
-    const adOverlay = document.createElement('div');
-    adOverlay.style.position = 'fixed';
-    adOverlay.style.inset = '0';
-    adOverlay.style.backgroundColor = 'black';
-    adOverlay.style.color = 'white';
-    adOverlay.style.display = 'flex';
-    adOverlay.style.alignItems = 'center';
-    adOverlay.style.justifyContent = 'center';
-    adOverlay.style.zIndex = '9999';
-    adOverlay.style.fontSize = '2rem';
-    adOverlay.style.fontFamily = '"Russo One", sans-serif';
-    adOverlay.innerText = 'ПРОСМОТР РЕКЛАМЫ... (2с)';
-    document.body.appendChild(adOverlay);
 
-    // TODO: Интеграция Yandex SDK
-    // ysdk.adv.showRewardedVideo({ callbacks: { ... } })
+    if (ysdk) {
+      ysdk.adv.showRewardedVideo({
+        callbacks: {
+          onOpen: () => {
+            soundManager.toggleMute(true);
+          },
+          onRewarded: () => {
+            console.log("РЕКЛАМА ПРОСМОТРЕНА. ВОСКРЕШЕНИЕ.");
+            setGameState(GameState.PLAYING);
+            setReviveTrigger(prev => prev + 1); // Триггер логики воскрешения в Canvas
+            soundManager.startMusic();
+            
+            // Gameplay API: Start (continuing)
+            if (ysdk.features.GameplayAPI) {
+              ysdk.features.GameplayAPI.start();
+            }
+          },
+          onClose: () => {
+             soundManager.toggleMute(isMuted); 
+             if (!isMuted) soundManager.toggleMute(false);
+          },
+          onError: (e: any) => {
+            console.error('Rewarded Ad Error', e);
+            // В случае ошибки можно либо просто закрыть, либо дать награду (на усмотрение разработчика)
+            // Здесь просто восстановим звук
+            soundManager.toggleMute(isMuted);
+          }
+        }
+      });
+    } else {
+      // Fallback для разработки (без SDK)
+      console.log("SDK не найден. Симуляция рекламы...");
+      const adOverlay = document.createElement('div');
+      adOverlay.style.position = 'fixed';
+      adOverlay.style.inset = '0';
+      adOverlay.style.backgroundColor = 'black';
+      adOverlay.style.color = 'white';
+      adOverlay.style.display = 'flex';
+      adOverlay.style.alignItems = 'center';
+      adOverlay.style.justifyContent = 'center';
+      adOverlay.style.zIndex = '9999';
+      adOverlay.style.fontSize = '2rem';
+      adOverlay.style.fontFamily = '"Russo One", sans-serif';
+      adOverlay.innerText = 'СИМУЛЯЦИЯ РЕКЛАМЫ... (2с)';
+      document.body.appendChild(adOverlay);
 
-    setTimeout(() => {
-      document.body.removeChild(adOverlay);
-      console.log("РЕКЛАМА ЗАВЕРШЕНА. ВОСКРЕШЕНИЕ.");
-      setGameState(GameState.PLAYING);
-      setReviveTrigger(prev => prev + 1); // Триггер логики воскрешения в Canvas
-      soundManager.startMusic();
-    }, 2000);
+      setTimeout(() => {
+        document.body.removeChild(adOverlay);
+        setGameState(GameState.PLAYING);
+        setReviveTrigger(prev => prev + 1);
+        soundManager.startMusic();
+      }, 2000);
+    }
   };
 
   return (
@@ -148,7 +234,7 @@ function App() {
             </button>
             
             <button 
-              onClick={restartGame}
+              onClick={handleRestartClick}
               className="w-full py-3 bg-gray-800 text-gray-300 rounded border border-gray-600 hover:bg-gray-700 transition-all"
             >
               ЗАНОВО
